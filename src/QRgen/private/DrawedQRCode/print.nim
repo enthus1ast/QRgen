@@ -3,18 +3,19 @@ import
   ".."/[Drawing],
   std/[strformat]
 
-proc printTerminal*(self: DrawedQRCode) =
-  ## Print a `DrawedQRCode` to the terminal using `stdout`.
-  stdout.write "\n\n\n\n\n"
-  for y in 0'u8..<self.drawing.size:
-    stdout.write "          "
-    for x in 0'u8..<self.drawing.size:
-      stdout.write(
-        if self.drawing[x, y]: "██"
-        else: "  "
-      )
-    stdout.write "\n"
-  stdout.write "\n\n\n\n\n"
+when not defined(js):
+  proc printTerminal*(self: DrawedQRCode) =
+    ## Print a `DrawedQRCode` to the terminal using `stdout`.
+    stdout.write "\n\n\n\n\n"
+    for y in 0'u8..<self.drawing.size:
+      stdout.write "          "
+      for x in 0'u8..<self.drawing.size:
+        stdout.write(
+          if self.drawing[x, y]: "██"
+          else: "  "
+        )
+      stdout.write "\n"
+    stdout.write "\n\n\n\n\n"
 
 const svgHeader: string =
   # SVG tag start
