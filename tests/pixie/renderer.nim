@@ -1,23 +1,36 @@
 import QRgen
 import QRgen/private/Drawing
 import pixie
+import print
+import std/math
+import options
+# func rr(ff: float): float =
 
-proc render(dr: DrawedQRCode, pixelSize = 512, bgColor = rgb(255, 255, 255), fgColor = rgb(0,0,0) ): Image =
-  let ss = pixelSize div dr.drawing.size.int
+
+proc render(dr: DrawedQRCode, pixelSize = 512, light: string | ColorRGB = rgb(255, 255, 255),
+    dark: string | ColorRGB = rgb(0,0,0), centerImage: Option[Image] = none[Image]()): Image =
+  let ss = (pixelSize / dr.drawing.size.int).float32 # <- `div` = no lines but smaller img,   `/` = lines but good size
   let wh = vec2(ss.float, ss.float)
+  print(pixelSize, dr.drawing.size, ss, wh)
   var image = newImage(pixelSize, pixelSize)
-  image.fill(bgColor)
+  image.fill(light)
   let ctx = newContext(image)
-  ctx.fillStyle = fgColor
-  ctx.strokeStyle = fgColor
+  ctx.fillStyle = dark
+  ctx.strokeStyle = dark
   for yy in 0 ..< dr.drawing.size.int:
     for xx in 0 ..< dr.drawing.size.int:
       if dr.drawing[xx.uint8, yy.uint8]:
-        let pos = vec2((xx * ss).float, (yy * ss).float)
-        let re = rect(pos, wh)
+        let pos = vec2((xx.float * ss).float, (yy.float * ss).float)
         ctx.fillRect(rect(pos, wh))
         # circles just for fun:
+        # let re = rect(pos, wh)
         # ctx.fillCircle(Circle(pos: pos, radius: (ss.float / 1.5 ).float))
+  if isSome(centerImage):
+    let cpos = vec2(
+      ((pixelSize / 2) - (centerImage.get().width / 2).float),
+      ((pixelSize / 2) - (centerImage.get().height / 2).float),
+    )
+    image.draw(centerImage.get(), transform = translate(cpos))
   return image
 
 when isMainModule:
@@ -34,8 +47,20 @@ when isMainModule:
   block:
     let urlQR = newQR("https://nim-lang.org")
     block:
-      let img = urlQR.render()
+      let img = urlQR.render(light = "blue", dark = "#131313")
       img.writeFile(getAppDir() / "nl.png")
     block:
-      let img = urlQR.render(64)
+      let img = urlQR.render(64, light = "blue", dark = "#131313")
       img.writeFile(getAppDir() / "nl2.png")
+
+  block:
+    let urlQR = newQR("https://nim-lang.org")
+    let centerImg = readImage(getAppDir() / ".." / "tests" / "pixie" / "QRgen_logo_small.png")
+    let img = urlQR.render(centerImage = some(centerImg))
+    img.writeFile(getAppDir() / "img_withImg.png")
+
+  block:
+    let urlQR = newQR("https://nim-lang.org")
+    let centerImg = readImage(getAppDir() / ".." / "tests" / "pixie" / "QRgen_logo_small_white.png")
+    let img = urlQR.render(centerImage = some(centerImg))
+    img.writeFile(getAppDir() / "img_withImg2.png")
