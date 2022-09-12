@@ -12,7 +12,12 @@ proc render(dr: DrawedQRCode, pixelSize = 512, light: string | ColorRGB = rgb(25
   let ss = (pixelSize div dr.drawing.size.int).float32 # <- `div` = no lines but smaller img,   `/` = lines but good size
   let wh = vec2(ss.float, ss.float)
   print(pixelSize, dr.drawing.size, ss, wh)
-  var image = newImage(pixelSize, pixelSize)
+
+  let tmpPixelSize = (ss * dr.drawing.size.float).ceil().int
+  # var image = newImage(pixelSize, pixelSize)
+  var image = newImage(tmpPixelSize, tmpPixelSize)
+
+
   image.fill(light)
   let ctx = newContext(image)
   ctx.fillStyle = dark
@@ -25,13 +30,17 @@ proc render(dr: DrawedQRCode, pixelSize = 512, light: string | ColorRGB = rgb(25
         # circles just for fun:
         # let re = rect(pos, wh)
         # ctx.fillCircle(Circle(pos: pos, radius: (ss.float / 1.5 ).float))
+
+  var outputImg = newImage(pixelSize, pixelSize)
+  outputImg.draw(image, scale(vec2( pixelSize / tmpPixelSize, pixelSize / tmpPixelSize )))
+
   if isSome(centerImage):
     let cpos = vec2(
       ((pixelSize / 2) - (centerImage.get().width / 2).float),
       ((pixelSize / 2) - (centerImage.get().height / 2).float),
     )
-    image.draw(centerImage.get(), transform = translate(cpos), blendMode = centerImageBlendMode)
-  return image
+    outputImg.draw(centerImage.get(), transform = translate(cpos), blendMode = centerImageBlendMode)
+  return outputImg
 
 when isMainModule:
   import os
@@ -75,6 +84,13 @@ when isMainModule:
     let urlQR = newQR("https://nim-lang.org", ecLevel = qrECH)
     let centerImg = readImage(getAppDir() / ".." / "tests" / "pixie" / "nimBadger.png")
     for bm in BlendMode:
-      let img = urlQR.render(centerImage = some(centerImg), centerImageBlendMode = bm)
+      let img = urlQR.render(centerImage = some(centerImg), centerImageBlendMode = bm, light = "white", dark = "#FF0000")
       img.writeFile(getAppDir() / "img_withImg4_" & $bm & ".png")
 
+  # import strutils
+  # block:
+  #   for idx in 500..510:
+  #     let urlQR = newQR("a".repeat(idx))
+  #     let centerImg = readImage(getAppDir() / ".." / "tests" / "pixie" / "nimBadger.png")
+  #     let img = urlQR.render(centerImage = some(centerImg))
+  #     img.writeFile(getAppDir() / "img_withImg5_" & $idx & ".png")
