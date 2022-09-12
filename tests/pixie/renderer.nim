@@ -9,7 +9,7 @@ import options
 
 proc render(dr: DrawedQRCode, pixelSize = 512, light: string | ColorRGB = rgb(255, 255, 255),
     dark: string | ColorRGB = rgb(0,0,0), centerImage: Option[Image] = none[Image](), centerImageBlendMode = NormalBlend): Image =
-  let ss = (pixelSize / dr.drawing.size.int).float32 # <- `div` = no lines but smaller img,   `/` = lines but good size
+  let ss = (pixelSize div dr.drawing.size.int).float32 # <- `div` = no lines but smaller img,   `/` = lines but good size
   let wh = vec2(ss.float, ss.float)
   print(pixelSize, dr.drawing.size, ss, wh)
   var image = newImage(pixelSize, pixelSize)
